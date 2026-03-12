@@ -341,6 +341,11 @@ def submit_project():
         "year": data.get("year", "2024"),
         "submitted_by": data.get("submitted_by", "Anonymous"),
         "extends_id": data.get("extends_id", None),
+        "parent_project_id": data.get("parent_project_id", data.get("extends_id")),
+        "github_repo": data.get("github_repo", ""),
+        "demo_link": data.get("demo_link", ""),
+        "improvements_made": data.get("improvements_made", ""),
+        "additional_features": data.get("additional_features", ""),
         "views": 0,
         "created_at": datetime.datetime.now()
     }
@@ -428,7 +433,13 @@ def get_project(pid):
         except:
             pass
             
-    extensions = [p for p in all_projects if p.get("extends_id") == pid]
+    extensions = [p for p in all_projects if p.get("parent_project_id") == pid or p.get("extends_id") == pid]
+    
+    parent_id = project.get("parent_project_id") or project.get("extends_id")
+    if parent_id:
+        parent_docs = [p for p in all_projects if p["_id"] == parent_id]
+        if parent_docs:
+            project["parent_project"] = parent_docs[0]
     
     alumni_data = []
     if project.get("alumni_contributors"):
@@ -580,14 +591,75 @@ You MUST respond with a raw, valid JSON object exactly matching this format, wit
 def chatbot():
     data = request.json
     query = data.get("query", "")
-    
+    if not query:
+        return jsonify({"type": "text", "reply": "I didn't quite catch that."}), 200
+
+    all_projects = get_projects()
+    if all_projects:
+        descriptions = [p.get("title", "") + " " + p.get("description", "") + " " + p.get("domain", "") + " " + " ".join(p.get("keywords", [])) for p in all_projects]
+        descriptions.append(query)
+        vectorizer = TfidfVectorizer(stop_words='english')
+        try:
+            tfidf_matrix = vectorizer.fit_transform(descriptions)
+            cosine_sim = cosine_similarity(tfidf_matrix[-1:], tfidf_matrix[:-1]).flatten()
+            
+            results = []
+            for i, score in enumerate(cosine_sim):
+                if score > 0.1:
+                    results.append({
+                        "id": str(all_projects[i]["_id"]),
+                        "title": all_projects[i].get("title", ""),
+                        "similarity": round(score * 100),
+                        "domain": all_projects[i].get("domain", "Unknown"),
+                        "tech_stack": all_projects[i].get("tech_stack", "")
+                    })
+            
+            if results:
+                results = sorted(results, key=lambda x: x["similarity"], reverse=True)[:3]
+                return jsonify({
+                    "type": "existing_projects",
+                    "reply": "Projects available on CampusIdeaHub:",
+                    "projects": results
+                }), 200
+        except Exception as e:
+            print("Chatbot TFIDF Error:", e)
+
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = f'''You are CampusIdeaHub's AI assistant, a helpful and technical mentor for campus students looking for project ideas or tech stack recommendations. Keep answers concise, friendly, and structured. Answer the following student query: {query}'''
+        prompt = f'''You are an expert project mentor for university students.
+A student asked for the following project idea:
+{query}
+
+Provide:
+1. A possible project concept
+2. Step-by-step implementation approach
+3. Required technologies
+4. Example applications of this project
+
+Return the response in structured format EXACTLY matching this raw JSON object, without markdown:
+{{
+  "project_concept": "string",
+  "implementation_steps": ["step1", "step2"],
+  "technologies": ["tech1", "tech2"],
+  "example_applications": ["app1", "app2"]
+}}
+'''
         response = model.generate_content(prompt)
-        reply = response.text
+        text = response.text.strip()
+        if text.startswith("```json"):
+            text = text[7:-3].strip()
+        elif text.startswith("```"):
+            text = text[3:-3].strip()
+            
+        import json
+        result = json.loads(text)
+        return jsonify({
+            "type": "ai_suggestion",
+            "reply": "I couldn't find an exact match, but here is an AI-generated idea:",
+            "suggestion": result
+        }), 200
     except Exception as e:
-        print("Gemini Error:", e)
+        print("Gemini Chatbot Error:", e)
         domains = ["AI", "Web", "IoT", "Cybersecurity", "Cloud", "App", "Machine Learning", "ML"]
         detected = next((d for d in domains if d.lower() in query.lower()), None)
         if detected:
@@ -597,7 +669,7 @@ def chatbot():
         else:
             reply = "I'm having trouble connecting to the Gemini API right now. Please try again later or make sure the API key is configured correctly."
             
-    return jsonify({"reply": reply}), 200
+        return jsonify({"type": "text", "reply": reply}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

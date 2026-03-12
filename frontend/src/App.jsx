@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Alumni from './pages/Alumni';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
+import ExtendIdea from './pages/ExtendIdea';
 
 function PrivateRoute({ children }) {
   const { currentUser } = useAuth();
@@ -30,6 +31,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/submit" element={<PrivateRoute><SubmitIdea /></PrivateRoute>} />
+            <Route path="/extend" element={<PrivateRoute><ExtendIdea /></PrivateRoute>} />
             <Route path="/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

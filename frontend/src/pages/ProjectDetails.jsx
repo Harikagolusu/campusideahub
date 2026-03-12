@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Calendar, User, Code2, Tag, Network, ArrowRight, GraduationCap, Briefcase, Send, CheckCircle2 } from 'lucide-react';
+import { Calendar, User, Code2, Tag, Network, ArrowRight, GraduationCap, Briefcase, Send, CheckCircle2, Github, ExternalLink, GitMerge } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ProjectDetails() {
@@ -112,13 +112,37 @@ export default function ProjectDetails() {
                 </div>
               </div>
             </div>
+
+            {/* Project Resources Block */}
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                Project Resources
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {project.github_repo ? (
+                  <a href={project.github_repo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-sm transition-colors shadow-md">
+                    <Github size={18} /> Open Repository
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-xl font-bold text-sm border border-slate-200 cursor-not-allowed">
+                    <Github size={18} /> No Repository Linked
+                  </span>
+                )}
+                
+                {project.demo_link && (
+                  <a href={project.demo_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl font-bold text-sm transition-colors shadow-sm border border-emerald-200">
+                    <ExternalLink size={18} /> View Live Demo
+                  </a>
+                )}
+              </div>
+            </div>
             
-            <div className="mt-8">
+            <div className="mt-8 pt-8 border-t border-slate-100">
               <Link 
-                to={`/submit?extends_id=${project._id}`}
+                to={`/extend?parent_id=${project._id}`}
                 className="w-full sm:w-auto inline-flex justify-center items-center gap-2 glass-button"
               >
-                Extend this Idea <ArrowRight size={18} />
+                <GitMerge size={20} className="text-indigo-400" /> Extend this Idea <ArrowRight size={18} />
               </Link>
             </div>
           </motion.div>
@@ -179,6 +203,23 @@ export default function ProjectDetails() {
         </div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="col-span-1 space-y-6">
+          
+          {/* Parent Project Panel */}
+          {project.parent_project && (
+            <div className="glass-card p-6 border-emerald-100 bg-emerald-50/30">
+              <h3 className="font-bold text-lg text-slate-800 mb-2 flex items-center gap-2">
+                <GitMerge className="text-emerald-500" size={20} /> Parent Project
+              </h3>
+              <p className="text-xs text-slate-600 mb-3 font-medium">This project is an extension of:</p>
+              <Link to={`/project/${project.parent_project._id}`} className="block p-3 bg-white hover:bg-emerald-50 border border-emerald-100 rounded-xl transition-colors shadow-sm group">
+                <h4 className="font-bold text-emerald-700 text-sm mb-1 group-hover:text-emerald-800 line-clamp-1 flex items-center justify-between">
+                  {project.parent_project.title} <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                </h4>
+                <p className="text-xs text-slate-500 line-clamp-1">{project.parent_project.description}</p>
+              </Link>
+            </div>
+          )}
+
            {/* Idea Graph Connections Panel */}
           {project.extensions?.length > 0 && (
             <div className="glass-card p-6 bg-gradient-to-br from-indigo-50 to-white border-indigo-100">

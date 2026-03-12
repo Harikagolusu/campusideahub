@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Bot, User } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, User, CheckCircle2, ChevronRight, Server, Save } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Chatbot() {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { isBot: true, text: "Hi! I am the Campus AI Chatbot. Try asking me to 'suggest ideas' or 'find AI projects'." }
+    { isBot: true, text: "Hi! I am the Campus AI Chatbot. Tell me what kind of project you want to build and I'll find similar ideas or generate a new concept for you." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,12 +36,39 @@ export default function Chatbot() {
 
     try {
       const res = await axios.post(`http://${window.location.hostname}:5000/api/chatbot`, { query: userMessage });
-      const botResponse = res.data.reply;
-      setMessages(prev => [...prev, { isBot: true, text: botResponse }]);
+      const botResponse = res.data;
+      setMessages(prev => [...prev, { 
+        isBot: true, 
+        text: botResponse.reply,
+        type: botResponse.type || 'text',
+        data: botResponse 
+      }]);
     } catch (err) {
       setMessages(prev => [...prev, { isBot: true, text: "Sorry, I'm having trouble connecting right now." }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveIdea = async (suggestion) => {
+    try {
+      const newProject = {
+        title: suggestion.project_concept.split(' - ')[0] || "AI Recommended Idea",
+        description: suggestion.project_concept + '\n\nImplementation Steps:\n' + suggestion.implementation_steps.join('\n') + '\n\nApplications:\n' + suggestion.example_applications.join('\n'),
+        domain: 'Other',
+        tech_stack: suggestion.technologies ? suggestion.technologies.join(', ') : '',
+        keywords: ['AI_Suggestion'],
+        year: currentUser?.year || new Date().getFullYear().toString(),
+        submitted_by: currentUser?.name || currentUser?.email?.split('@')[0] || 'Anonymous',
+        extends_id: null
+      };
+
+      const res = await axios.post(`http://${window.location.hostname}:5000/api/projects`, newProject);
+      setIsOpen(false);
+      navigate(`/project/${res.data._id}`);
+    } catch (err) {
+      console.error(err);
+      alert('Error saving project idea.');
     }
   };
 
@@ -82,7 +114,58 @@ export default function Chatbot() {
                         ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-none shadow-sm' 
                         : 'bg-indigo-600 text-white rounded-tr-none shadow-md'
                     }`}>
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      <p className="whitespace-pre-wrap font-medium">{msg.text}</p>
+                      
+                      {msg.isBot && msg.type === 'existing_projects' && msg.data?.projects && (
+                        <div className="mt-3 space-y-2">
+                          {msg.data.projects.map(p => (
+                            <div key={p.id} className="p-3 bg-slate-50 border border-indigo-100 rounded-xl">
+                              <h4 className="font-bold text-indigo-900 leading-tight mb-1">{p.title}</h4>
+                              <p className="text-xs text-slate-500 mb-2">Domain: {p.domain} • Tech: {p.tech_stack}</p>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">{p.similarity}% Match</span>
+                                <button onClick={() => { setIsOpen(false); navigate(`/project/${p.id}`); }} className="text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-md transition-colors flex items-center">
+                                  View <ChevronRight size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {msg.isBot && msg.type === 'ai_suggestion' && msg.data?.suggestion && (
+                        <div className="mt-4 space-y-4 text-xs">
+                          <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                            <h4 className="font-bold text-indigo-900 mb-1 flex items-center gap-1"><CheckCircle2 size={14}/> Concept</h4>
+                            <p className="text-indigo-800 font-medium">{msg.data.suggestion.project_concept}</p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-bold text-slate-700 mb-1 flex items-center gap-1"><Server size={14}/> Tech Stack</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {msg.data.suggestion.technologies?.map((t, i) => (
+                                <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">{t}</span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-bold text-slate-700 mb-1">Steps</h4>
+                            <ul className="list-disc pl-4 text-slate-600 space-y-1">
+                              {msg.data.suggestion.implementation_steps?.slice(0,3).map((t, i) => (
+                                <li key={i}>{t}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <button 
+                            onClick={() => handleSaveIdea(msg.data.suggestion)}
+                            className="w-full mt-2 py-2 px-3 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+                          >
+                            <Save size={16} /> Save this Idea to CampusIdeaHub
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

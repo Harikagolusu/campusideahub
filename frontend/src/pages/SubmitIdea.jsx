@@ -7,8 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function SubmitIdea() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const extendsId = searchParams.get('extends_id');
   const { currentUser } = useAuth();
   
   const defaultName = currentUser?.name || currentUser?.email?.split('@')[0] || 'Anonymous';
@@ -21,8 +19,8 @@ export default function SubmitIdea() {
     tech_stack: '',
     keywords: '',
     year: defaultYear,
-    submitted_by: defaultName,
-    extends_id: extendsId || null
+    github_repo: '',
+    submitted_by: defaultName
   });
 
   const [similarIdeas, setSimilarIdeas] = useState([]);
@@ -36,7 +34,7 @@ export default function SubmitIdea() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    if (name === 'description' && !extendsId) {
+    if (name === 'description') {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => checkSimilarity(value), 1000);
     }
@@ -60,8 +58,13 @@ export default function SubmitIdea() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (similarIdeas.length > 0 && !warningBypassed && !extendsId) {
+    if (similarIdeas.length > 0 && !warningBypassed) {
       alert("Please review the similar ideas. If you still want to submit, click 'Proceed Anyway' first.");
+      return;
+    }
+    
+    if (formData.github_repo && !formData.github_repo.startsWith('https://github.com/')) {
+      alert("GitHub Repository link must start with https://github.com/");
       return;
     }
 
@@ -83,7 +86,7 @@ export default function SubmitIdea() {
     <div className="pt-24 pb-12 px-4 max-w-4xl mx-auto min-h-screen">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-cyan-500 mb-2">
-          {extendsId ? 'Extend Project Idea' : 'Submit a Project Idea'}
+          Submit a Project Idea
         </h1>
         <p className="text-slate-600 font-medium">Contribute to the CampusIdeaHub knowledge base.</p>
       </motion.div>
@@ -162,6 +165,33 @@ export default function SubmitIdea() {
               />
             </div>
 
+            <div className="pt-4 border-t border-slate-100">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Project Resources</label>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">GitHub Repository Link <span className="text-rose-500">*</span></label>
+                  <input 
+                    type="url" 
+                    name="github_repo"
+                    required
+                    className="w-full glass-input" 
+                    placeholder="https://github.com/user/project"
+                    value={formData.github_repo}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Upload Images (Optional)</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    multiple
+                    className="w-full glass-input file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer text-slate-500" 
+                  />
+                </div>
+              </div>
+            </div>
+
             <button 
               type="submit" 
               className="w-full glass-button flex justify-center items-center gap-2 h-12 text-lg shadow-lg"
@@ -211,7 +241,7 @@ export default function SubmitIdea() {
                       </div>
                       <p className="text-xs text-slate-500 line-clamp-2 mb-2">{idea.description}</p>
                       <button 
-                        onClick={() => navigate(`/submit?extends_id=${idea.id}`)}
+                        onClick={(e) => { e.preventDefault(); navigate(`/extend?parent_id=${idea.id}`); }}
                         className="text-xs font-semibold text-indigo-600 flex items-center gap-1 group-hover:text-indigo-800 transition-colors"
                       >
                         Extend this idea <ArrowRight size={12} />
@@ -219,7 +249,7 @@ export default function SubmitIdea() {
                     </div>
                   ))}
 
-                  {!warningBypassed && !extendsId && (
+                  {!warningBypassed && (
                     <button 
                       type="button"
                       onClick={() => setWarningBypassed(true)}
