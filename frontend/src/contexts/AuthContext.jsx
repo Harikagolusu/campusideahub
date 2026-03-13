@@ -22,8 +22,11 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     if (isMock) {
-      const savedUser = JSON.parse(localStorage.getItem('mockUser')) || {};
-      const mockUser = { uid: 'mock_uid_123', email, name: email.split('@')[0], department: 'CSE', year: '1', role: 'student', ...savedUser };
+      const specificUid = `mock_uid_${email.replace(/[^a-zA-Z0-9]/g, '')}`;
+      let savedUser = JSON.parse(localStorage.getItem('mockUser')) || {};
+      if (savedUser.uid !== specificUid) savedUser = {}; // Reset if logging into a newly spoofed different email
+      
+      const mockUser = { uid: specificUid, email, name: email.split('@')[0], department: 'CSE', year: '1', role: 'student', ...savedUser };
       setCurrentUser(mockUser);
       localStorage.setItem('mockUser', JSON.stringify(mockUser));
       return { user: mockUser };
@@ -33,7 +36,8 @@ export function AuthProvider({ children }) {
 
   async function signup(email, password) {
     if (isMock) {
-      const mockUser = { uid: 'mock_uid_123', email };
+      const specificUid = `mock_uid_${email.replace(/[^a-zA-Z0-9]/g, '')}`;
+      const mockUser = { uid: specificUid, email };
       return { user: mockUser };
     }
     return createUserWithEmailAndPassword(auth, email, password);

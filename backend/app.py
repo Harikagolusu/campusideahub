@@ -260,10 +260,61 @@ if db:
         })
 
 
+import json
+import os
+
+MOCK_DB_PATH = '.mock_users.json'
+
+def load_mock_db():
+    if os.path.exists(MOCK_DB_PATH):
+        try:
+            with open(MOCK_DB_PATH, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_mock_db(db_dict):
+    with open(MOCK_DB_PATH, 'w') as f:
+        json.dump(db_dict, f, indent=2)
+
+mock_users_db = load_mock_db()
+
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.json
-    if not db: return jsonify(data), 200
+    uid = data.get('uid')
+    if not db:
+        if not uid: return jsonify(data), 200
+        if uid in mock_users_db:
+            user_doc = mock_users_db[uid]
+            for k, v in data.items():
+                if v is not None: user_doc[k] = v
+            save_mock_db(mock_users_db)
+            return jsonify(user_doc), 200
+        else:
+            email = data.get("email", "")
+            default_name = email.split('@')[0].capitalize() if email else "User"
+            name = data.get("name", default_name)
+            role = data.get("role", "student")
+            
+            if "faculty" in email.lower() and "role" not in data:
+                role = "faculty"
+            if "admin" in email.lower() and "role" not in data:
+                role = "admin"
+
+            new_user = {
+                "name": name,
+                "email": email,
+                "department": data.get("department", "CSE"),
+                "year": data.get("year", "1"),
+                "role": role,
+                **data
+            }
+            mock_users_db[uid] = new_user
+            save_mock_db(mock_users_db)
+            new_user['_id'] = uid
+            return jsonify(new_user), 200
     uid = data.get('uid')
     if uid:
         user_ref = db.collection('users').document(uid)
@@ -279,6 +330,13 @@ def login():
         if "bio" in data: updates["bio"] = data.get("bio")
         if "profile_picture" in data: updates["profile_picture"] = data.get("profile_picture")
         if "role" in data: updates["role"] = data.get("role")
+        if "area_of_interest" in data: updates["area_of_interest"] = data.get("area_of_interest")
+        if "designation" in data: updates["designation"] = data.get("designation")
+        if "expertise" in data: updates["expertise"] = data.get("expertise")
+        if "experience_years" in data: updates["experience_years"] = data.get("experience_years")
+        if "office_location" in data: updates["office_location"] = data.get("office_location")
+        if "google_scholar" in data: updates["google_scholar"] = data.get("google_scholar")
+        if "faculty_id" in data: updates["faculty_id"] = data.get("faculty_id")
         
         if doc.exists:
             existing = convert_doc(doc)

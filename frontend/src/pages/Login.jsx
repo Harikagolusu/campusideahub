@@ -41,7 +41,7 @@ export default function Login() {
         const finalUser = { ...userCred.user, ...res.data };
         setCurrentUser(finalUser);
         
-        if (userCred.user.uid === 'mock_uid_123') {
+        if (userCred.user.uid.startsWith('mock_uid')) {
            localStorage.setItem('mockUser', JSON.stringify(finalUser));
         }
 
@@ -60,8 +60,7 @@ export default function Login() {
         const finalUser = { ...userCred.user, ...res.data };
         setCurrentUser(finalUser);
         
-        // Mock persistence
-        if (userCred.user.uid === 'mock_uid_123') {
+        if (userCred.user.uid.startsWith('mock_uid')) {
            localStorage.setItem('mockUser', JSON.stringify(finalUser));
         }
         
