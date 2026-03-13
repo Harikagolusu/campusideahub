@@ -633,7 +633,10 @@ def suggest_idea():
     domain = data.get("domain", "")
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel(
+            'gemini-2.5-flash',
+            generation_config={"response_mime_type": "application/json"}
+        )
         prompt = f'''You are an expert project mentor for university students.
 A student has the following project idea:
 
@@ -648,7 +651,7 @@ Provide:
 4. Technologies and tools required to build this project
 
 Keep responses structured and student-friendly.
-You MUST respond with a raw, valid JSON object exactly matching this format, with no markdown formatting or extra text:
+You MUST respond with a raw, valid JSON object exactly matching this format:
 {{
   "suggestions": ["string", "string"],
   "example_projects": ["string", "string"],
@@ -657,14 +660,8 @@ You MUST respond with a raw, valid JSON object exactly matching this format, wit
 }}
 '''
         response = model.generate_content(prompt)
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:-3].strip()
-        elif text.startswith("```"):
-            text = text[3:-3].strip()
-            
         import json
-        result = json.loads(text)
+        result = json.loads(response.text.strip())
         return jsonify(result), 200
     except Exception as e:
         print("Gemini Suggest Error:", e)
@@ -759,7 +756,10 @@ def chatbot():
             print("Chatbot TFIDF Error:", e)
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel(
+            'gemini-2.5-flash',
+            generation_config={"response_mime_type": "application/json"}
+        )
         prompt = f'''You are an expert project mentor for university students.
 A student asked for the following project idea:
 {query}
@@ -770,7 +770,7 @@ Provide:
 3. Required technologies
 4. Example applications of this project
 
-Return the response in structured format EXACTLY matching this raw JSON object, without markdown:
+Return the response in structured format EXACTLY matching this raw JSON object:
 {{
   "project_concept": "string",
   "implementation_steps": ["step1", "step2"],
@@ -779,14 +779,8 @@ Return the response in structured format EXACTLY matching this raw JSON object, 
 }}
 '''
         response = model.generate_content(prompt)
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:-3].strip()
-        elif text.startswith("```"):
-            text = text[3:-3].strip()
-            
         import json
-        result = json.loads(text)
+        result = json.loads(response.text.strip())
         return jsonify({
             "type": "ai_suggestion",
             "reply": "I couldn't find an exact match, but here is an AI-generated idea:",

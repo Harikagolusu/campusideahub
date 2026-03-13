@@ -49,7 +49,7 @@ export default function AIAssistant() {
         title: formData.title,
         description: formData.description + '\n\n' + (result?.suggestions?.length ? 'AI Recommendations:\n' + result.suggestions.join('\n') : ''),
         domain: formData.domain,
-        tech_stack: result?.technologies ? result.technologies.join(', ') : '',
+        tech_stack: Array.isArray(result?.technologies) ? result.technologies.join(', ') : '',
         keywords: [formData.domain.toLowerCase()],
         year: currentUser?.year || new Date().getFullYear().toString(),
         submitted_by: currentUser?.name || currentUser?.email?.split('@')[0] || 'Anonymous',
@@ -170,7 +170,7 @@ export default function AIAssistant() {
                     <h3 className="font-bold text-lg">AI Suggestions</h3>
                   </div>
                   <ul className="space-y-3">
-                    {result.suggestions?.map((item, i) => (
+                    {Array.isArray(result.suggestions) && result.suggestions?.map((item, i) => (
                       <li key={i} className="flex gap-3 text-slate-600 text-sm font-medium leading-relaxed">
                         <span className="text-indigo-400 font-bold shrink-0">•</span>
                         {item}
@@ -186,7 +186,7 @@ export default function AIAssistant() {
                     <h3 className="font-bold text-lg">Recommended Stack</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {result.technologies?.map((tech, i) => (
+                    {Array.isArray(result.technologies) && result.technologies?.map((tech, i) => (
                       <span key={i} className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-lg shadow-sm">
                         {tech}
                       </span>
@@ -206,7 +206,7 @@ export default function AIAssistant() {
                   <div>
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Example Projects</h4>
                     <ul className="space-y-3">
-                      {result.example_projects?.map((item, i) => (
+                      {Array.isArray(result.example_projects) && result.example_projects?.map((item, i) => (
                         <li key={i} className="flex gap-3 items-start p-3 rounded-xl bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 transition-colors">
                           <ExternalLink size={16} className="text-slate-400 mt-0.5 shrink-0 group-hover:text-indigo-500" />
                           <span className="text-slate-600 text-sm font-semibold">{item}</span>
@@ -218,7 +218,7 @@ export default function AIAssistant() {
                   <div>
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Research Papers</h4>
                     <ul className="space-y-3">
-                      {result.research_papers?.map((item, i) => (
+                      {Array.isArray(result.research_papers) && result.research_papers?.map((item, i) => (
                         <li key={i} className="flex gap-3 items-start p-3 rounded-xl bg-slate-50/50 border border-slate-100 group hover:border-cyan-200 transition-colors">
                           <BookOpen size={16} className="text-slate-400 mt-0.5 shrink-0 group-hover:text-cyan-500" />
                           <span className="text-slate-600 text-sm font-semibold">{item}</span>

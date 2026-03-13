@@ -54,9 +54,9 @@ export default function Chatbot() {
     try {
       const newProject = {
         title: suggestion.project_concept.split(' - ')[0] || "AI Recommended Idea",
-        description: suggestion.project_concept + '\n\nImplementation Steps:\n' + suggestion.implementation_steps.join('\n') + '\n\nApplications:\n' + suggestion.example_applications.join('\n'),
+        description: suggestion.project_concept + '\n\nImplementation Steps:\n' + (Array.isArray(suggestion.implementation_steps) ? suggestion.implementation_steps.join('\n') : '') + '\n\nApplications:\n' + (Array.isArray(suggestion.example_applications) ? suggestion.example_applications.join('\n') : ''),
         domain: 'Other',
-        tech_stack: suggestion.technologies ? suggestion.technologies.join(', ') : '',
+        tech_stack: Array.isArray(suggestion.technologies) ? suggestion.technologies.join(', ') : '',
         keywords: ['AI_Suggestion'],
         year: currentUser?.year || new Date().getFullYear().toString(),
         submitted_by: currentUser?.name || currentUser?.email?.split('@')[0] || 'Anonymous',
@@ -143,7 +143,7 @@ export default function Chatbot() {
                           <div>
                             <h4 className="font-bold text-slate-700 mb-1 flex items-center gap-1"><Server size={14}/> Tech Stack</h4>
                             <div className="flex flex-wrap gap-1">
-                              {msg.data.suggestion.technologies?.map((t, i) => (
+                              {Array.isArray(msg.data.suggestion.technologies) && msg.data.suggestion.technologies?.map((t, i) => (
                                 <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">{t}</span>
                               ))}
                             </div>
@@ -152,7 +152,7 @@ export default function Chatbot() {
                           <div>
                             <h4 className="font-bold text-slate-700 mb-1">Steps</h4>
                             <ul className="list-disc pl-4 text-slate-600 space-y-1">
-                              {msg.data.suggestion.implementation_steps?.slice(0,3).map((t, i) => (
+                              {Array.isArray(msg.data.suggestion.implementation_steps) && msg.data.suggestion.implementation_steps?.slice(0,3).map((t, i) => (
                                 <li key={i}>{t}</li>
                               ))}
                             </ul>
