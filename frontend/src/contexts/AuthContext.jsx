@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     if (isMock) {
-      const mockUser = { uid: 'mock_uid_123', email, name: email.split('@')[0], department: 'CSE', year: '1' };
+      const savedUser = JSON.parse(localStorage.getItem('mockUser')) || {};
+      const mockUser = { uid: 'mock_uid_123', email, name: email.split('@')[0], department: 'CSE', year: '1', role: 'student', ...savedUser };
       setCurrentUser(mockUser);
       localStorage.setItem('mockUser', JSON.stringify(mockUser));
       return { user: mockUser };
@@ -62,7 +63,14 @@ export function AuthProvider({ children }) {
             uid: user.uid,
             email: user.email
           });
-          setCurrentUser({ ...user, ...res.data });
+          setCurrentUser(prevUser => {
+             // Avoid race condition where initial auth state fetch overwrites signup details
+             // If the backend auto-generated a 'New User' skeleton but we already saved explicit forms locally
+             if (res.data.name === 'New User' && prevUser && prevUser.name !== 'New User') {
+                return { ...user, ...res.data, ...prevUser };
+             }
+             return { ...user, ...res.data };
+          });
         } catch (error) {
           console.error("Auth sync error:", error);
           setCurrentUser(user);

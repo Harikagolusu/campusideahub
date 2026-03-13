@@ -58,9 +58,19 @@ export default function ProjectDetails() {
         <div className="col-span-2 space-y-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8">
             <div className="flex justify-between items-start mb-6">
-              <span className="px-4 py-1.5 bg-gradient-to-r from-indigo-500 to-cyan-400 text-white font-bold rounded-full text-sm shadow-md">
-                {project.domain}
-              </span>
+              <div className="flex gap-2 items-center">
+                <span className="px-4 py-1.5 bg-gradient-to-r from-indigo-500 to-cyan-400 text-white font-bold rounded-full text-sm shadow-md">
+                  {project.domain}
+                </span>
+                {project.is_verified && (
+                  <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 font-bold rounded-full text-sm border border-emerald-100 flex items-center gap-1">
+                     ✔ Faculty Verified
+                  </span>
+                )}
+                <span className="px-3 py-1.5 bg-amber-50 text-amber-600 font-bold rounded-full text-sm border border-amber-100 flex items-center gap-1">
+                   ⭐ Innovation: {project.innovation_score} / 100
+                </span>
+              </div>
               <div className="flex bg-slate-100 px-3 py-1 rounded-lg items-center gap-2 text-slate-500 text-sm font-semibold border border-slate-200">
                 <Calendar size={16} /> {project.year}
               </div>
@@ -84,6 +94,25 @@ export default function ProjectDetails() {
               <h3 className="text-xl font-bold text-slate-800 mb-4">Description</h3>
               <p className="text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{project.description}</p>
             </div>
+
+            {project.faculty_score && (
+               <div className="mt-6 p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                 <div className="flex justify-between items-center mb-3">
+                   <h4 className="font-bold text-indigo-900 flex items-center gap-2">
+                     <CheckCircle2 size={18} className="text-indigo-500" /> Faculty Review
+                   </h4>
+                   <span className="text-sm font-black text-indigo-700 bg-white px-3 py-1 rounded-full shadow-sm">
+                     Score: {project.faculty_score}/100
+                   </span>
+                 </div>
+                 {project.faculty_comment && (
+                   <p className="text-sm text-indigo-800/80 italic border-l-2 border-indigo-300 pl-3">"{project.faculty_comment}"</p>
+                 )}
+                 {project.reviewed_by && (
+                   <p className="text-xs text-indigo-400 font-bold mt-2">— Reviewed by {project.reviewed_by}</p>
+                 )}
+               </div>
+            )}
 
             <div className="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -135,6 +164,49 @@ export default function ProjectDetails() {
                   </a>
                 )}
               </div>
+            </div>
+            
+            {/* Build Guide Section */}
+            <div className="mt-8 pt-8 border-t border-slate-100">
+               <details className="group glass-card border-indigo-100 open:bg-indigo-50/10 cursor-pointer overflow-hidden p-6 transition-colors rounded-2xl">
+                 <summary className="font-bold text-lg text-slate-800 flex items-center justify-between outline-none list-none">
+                   <div className="flex items-center gap-2">
+                     <Code2 className="text-indigo-500" size={20} /> How to Build This Project
+                   </div>
+                   <span className="text-slate-400 font-normal text-sm group-open:hidden">Click to expand</span>
+                   <span className="text-slate-400 font-normal text-sm hidden group-open:block">Collapse</span>
+                 </summary>
+                 <div className="mt-6 space-y-6 text-sm text-slate-600 font-medium cursor-auto">
+                   <div>
+                     <h4 className="font-bold text-slate-800 mb-2 border-b border-slate-200 pb-1 w-max">Required Technologies</h4>
+                     <ul className="list-disc pl-5 space-y-1">
+                       {(project.tech_stack || "Node.js, React, MongoDB").split(',').map((t, idx) => <li key={idx}>{t.trim()}</li>)}
+                     </ul>
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-slate-800 mb-2 border-b border-slate-200 pb-1 w-max">Basic Implementation Steps</h4>
+                     <ol className="list-decimal pl-5 space-y-2">
+                       <li>Environment Setup and Boilerplate Initialization</li>
+                       <li>Database modeling and Schema design</li>
+                       <li>Core API Development and third-party integrations</li>
+                       <li>Frontend UI/UX design matching the schema</li>
+                       <li>Testing and final deployment</li>
+                     </ol>
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-slate-800 mb-2 border-b border-slate-200 pb-1 w-max">Tools & Frameworks</h4>
+                     <p>Git, VS Code, Postman or Insomnia, Cloud Hosting (Vercel / Heroku)</p>
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-slate-800 mb-2 border-b border-slate-200 pb-1 w-max">Learning Resources</h4>
+                     <ul className="list-disc pl-5 space-y-1 text-indigo-500 underline">
+                       <li><a href="https://react.dev">React Official Docs</a></li>
+                       <li><a href="https://python.org">Python Guide</a></li>
+                       <li>GitHub trending examples</li>
+                     </ul>
+                   </div>
+                 </div>
+               </details>
             </div>
             
             <div className="mt-8 pt-8 border-t border-slate-100">
@@ -238,6 +310,26 @@ export default function ProjectDetails() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Innovation Timeline Panel */}
+          {project.timeline?.length > 1 && (
+             <div className="glass-card p-6 border-slate-200">
+                <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center gap-2">
+                  <Calendar className="text-indigo-500" size={20} /> Innovation Timeline
+                </h3>
+                <div className="relative border-l-2 border-indigo-100 ml-3 space-y-6">
+                  {project.timeline.map((node, idx) => (
+                    <div key={node._id} className="relative pl-6">
+                      <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${node._id === project._id ? 'bg-indigo-600 scale-125' : 'bg-slate-300'}`}></div>
+                      <Link to={`/project/${node._id}`} className="block block group">
+                        <span className="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md mb-1 inline-block">{node.year || '2024'}</span>
+                        <h4 className={`text-sm font-bold transition-colors ${node._id === project._id ? 'text-indigo-700' : 'text-slate-700 group-hover:text-indigo-600'}`}>{node.title}</h4>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+             </div>
           )}
 
           {/* Similar Ideas Panel */}

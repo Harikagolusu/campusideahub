@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lightbulb, Network, Search, MessageSquare, PlusCircle, LogOut, User, Users, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const location = useLocation();
@@ -43,15 +44,7 @@ export default function Navbar() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="flex items-center gap-2">
-                <div className="bg-gradient-to-tr from-indigo-500 to-cyan-400 p-2 rounded-xl text-white shadow-lg shadow-indigo-200">
-                  <Lightbulb size={24} />
-                </div>
-                <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-600 hidden xs:block">
-                  CampusIdeaHub
-                </span>
-                <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-600 block xs:hidden">
-                  IdeaHub
-                </span>
+                <img src={logo} alt="CampusIdeaHub" className="h-[60px] w-auto cursor-pointer object-contain" />
               </Link>
             </div>
             

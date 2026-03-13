@@ -228,34 +228,45 @@ export default function SubmitIdea() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-4"
                 >
-                  <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                    <p className="text-sm text-rose-700 font-semibold mb-1">⚠ Similar ideas found!</p>
+                  <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl mb-4">
+                    <p className="text-sm text-rose-700 font-semibold mb-1">⚠ A similar project already exists.</p>
                     <p className="text-xs text-rose-600/80">Consider extending an existing project instead of duplicating it.</p>
                   </div>
 
-                  {similarIdeas.map(idea => (
-                    <div key={idea.id} className="p-3 rounded-xl bg-white border border-slate-100 shadow-sm transition-all hover:border-indigo-200 group">
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-semibold text-slate-800 text-sm line-clamp-1">{idea.title}</h4>
-                        <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{idea.similarity}%</span>
+                  <div className="space-y-3">
+                    {similarIdeas.map(idea => (
+                      <div key={idea.id} className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm transition-all hover:border-indigo-300 group">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{idea.title}</h4>
+                          <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{idea.similarity}% MATCH</span>
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 mb-4">{idea.description}</p>
+                        <div className="flex items-center gap-3 mt-2 pt-3 border-t border-slate-50">
+                          <a 
+                            href={`/project/${idea.id}`} 
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-center text-xs font-bold text-slate-700 rounded-lg transition-colors"
+                          >
+                            View Project
+                          </a>
+                          <button 
+                            onClick={(e) => { e.preventDefault(); navigate(`/extend?parent_id=${idea.id}`); }}
+                            className="flex-1 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-center text-xs font-bold text-indigo-700 rounded-lg flex justify-center items-center gap-1 transition-colors"
+                          >
+                            Extend Existing Idea <ArrowRight size={12} />
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-2 mb-2">{idea.description}</p>
-                      <button 
-                        onClick={(e) => { e.preventDefault(); navigate(`/extend?parent_id=${idea.id}`); }}
-                        className="text-xs font-semibold text-indigo-600 flex items-center gap-1 group-hover:text-indigo-800 transition-colors"
-                      >
-                        Extend this idea <ArrowRight size={12} />
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {!warningBypassed && (
                     <button 
                       type="button"
                       onClick={() => setWarningBypassed(true)}
-                      className="w-full mt-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                      className="w-full mt-6 py-2.5 text-sm font-bold text-slate-500 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:text-slate-700 rounded-xl transition-colors"
                     >
-                      Bypass & Submit Anyway
+                      Continue Submission
                     </button>
                   )}
                 </motion.div>

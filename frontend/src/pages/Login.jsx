@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus } from 'lucide-react';
 import axios from 'axios';
+import logo from '../assets/logo.png';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,13 +13,13 @@ export default function Login() {
   const { login, signup, setCurrentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     department: 'Computer Science',
-    year: '1'
+    year: '1',
+    role: 'student'
   });
 
   const handleChange = (e) => {
@@ -32,8 +33,19 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        navigate('/');
+        const userCred = await login(formData.email, formData.password);
+        const res = await axios.post(`http://${window.location.hostname}:5000/api/auth/login`, {
+          uid: userCred.user.uid,
+          email: formData.email
+        });
+        const finalUser = { ...userCred.user, ...res.data };
+        setCurrentUser(finalUser);
+        
+        if (userCred.user.uid === 'mock_uid_123') {
+           localStorage.setItem('mockUser', JSON.stringify(finalUser));
+        }
+
+        navigate('/dashboard');
       } else {
         const userCred = await signup(formData.email, formData.password);
         // Save additional details to backend immediately
@@ -42,10 +54,18 @@ export default function Login() {
           email: formData.email,
           name: formData.name,
           department: formData.department,
-          year: formData.year
+          year: formData.year,
+          role: formData.role
         });
-        setCurrentUser({ ...userCred.user, ...res.data });
-        navigate('/');
+        const finalUser = { ...userCred.user, ...res.data };
+        setCurrentUser(finalUser);
+        
+        // Mock persistence
+        if (userCred.user.uid === 'mock_uid_123') {
+           localStorage.setItem('mockUser', JSON.stringify(finalUser));
+        }
+        
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err.message || 'Failed to authenticate');
@@ -59,8 +79,9 @@ export default function Login() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md glass-card p-8 shadow-2xl border-indigo-100"
+        className="w-full max-w-md glass-card p-8 shadow-2xl border-indigo-100 flex flex-col items-center"
       >
+        <img src={logo} alt="CampusIdeaHub Logo" className="h-[120px] w-auto mb-6 object-contain" />
         <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-cyan-500 mb-6 text-center">
           {isLogin ? 'Welcome Back' : 'Create an Account'}
         </h2>
@@ -86,14 +107,25 @@ export default function Login() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Year</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Year / Position</label>
                   <select name="year" value={formData.year} onChange={handleChange} className="w-full glass-input bg-white">
                     <option value="1">1st Year</option>
                     <option value="2">2nd Year</option>
                     <option value="3">3rd Year</option>
                     <option value="4">4th Year</option>
+                    <option value="Alumni">Alumni</option>
+                    <option value="Faculty">Faculty Member</option>
+                    <option value="Admin">Administrator</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-1">Platform Role</label>
+                 <select name="role" value={formData.role} onChange={handleChange} className="w-full glass-input bg-white font-bold text-indigo-700">
+                   <option value="student">Student</option>
+                   <option value="faculty">Faculty</option>
+                   <option value="admin">Campus Admin</option>
+                 </select>
               </div>
             </>
           )}

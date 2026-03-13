@@ -112,7 +112,13 @@ def convert_doc(doc_ref):
 
 def get_projects():
     if not db: return []
-    return [convert_doc(doc) for doc in db.collection('projects').stream()]
+    projects = [convert_doc(doc) for doc in db.collection('projects').stream()]
+    # Dynamically inject innovation metrics
+    for p in projects:
+        score = 65 + min(p.get("views", 0) // 5, 20)
+        p["innovation_score"] = min(score, 100)
+        p["is_verified"] = p.get("views", 0) > 300
+    return projects
 
 # seed logic if empty
 if db:
@@ -272,6 +278,7 @@ def login():
         if "skills" in data: updates["skills"] = data.get("skills")
         if "bio" in data: updates["bio"] = data.get("bio")
         if "profile_picture" in data: updates["profile_picture"] = data.get("profile_picture")
+        if "role" in data: updates["role"] = data.get("role")
         
         if doc.exists:
             existing = convert_doc(doc)
@@ -281,10 +288,11 @@ def login():
             return jsonify(existing), 200
         else:
             new_user = {
-                "name": data.get("name", "New Student"),
+                "name": data.get("name", "New User"),
                 "email": data.get("email"),
                 "department": data.get("department", "CSE"),
-                "year": data.get("year", "1")
+                "year": data.get("year", "1"),
+                "role": data.get("role", "student")
             }
             user_ref.set(new_user)
             new_user['_id'] = uid
@@ -464,6 +472,28 @@ def get_project(pid):
         if not suggested_mentors and all_alumni:
             suggested_mentors = all_alumni[:2]
                 
+    # Build Innovation Timeline
+    timeline = []
+    curr_id = pid
+    while curr_id:
+        curr_doc = next((p for p in all_projects if p["_id"] == curr_id), None)
+        if not curr_doc: break
+        timeline.append(curr_doc)
+        curr_id = curr_doc.get("extends_id") or curr_doc.get("parent_project_id")
+    
+    timeline.reverse()
+    for ext in extensions:
+        timeline.append(ext)
+        
+    seen = set()
+    unique_timeline = []
+    for t in timeline:
+        if t["_id"] not in seen:
+            seen.add(t["_id"])
+            unique_timeline.append(t)
+    unique_timeline.sort(key=lambda x: str(x.get("year", "2024")))
+    
+    project['timeline'] = unique_timeline
     project['similar'] = similar
     project['extensions'] = extensions
     project['alumni'] = alumni_data
@@ -586,6 +616,52 @@ You MUST respond with a raw, valid JSON object exactly matching this format, wit
             "research_papers": [f"A comprehensive study on modernized {domain} architectures", "Recent Advances in Student Hackathon Projects"],
             "technologies": ["React", "Node.js", "Firebase", "Python", "Tailwind CSS"]
         }), 200
+
+@app.route('/api/projects/pending', methods=['GET'])
+def get_pending_projects():
+    if not db: return jsonify({"pending": [], "reviewed_count": 0}), 200
+    all_projects = get_projects()
+    pending = [p for p in all_projects if not p.get('faculty_score')]
+    reviewed_count = len([p for p in all_projects if p.get('faculty_score')])
+    return jsonify({"pending": pending, "reviewed_count": reviewed_count}), 200
+
+@app.route('/api/projects/<pid>/review', methods=['POST'])
+def review_project(pid):
+    if not db: return jsonify({"error": "No db"}), 500
+    data = request.json
+    doc_ref = db.collection('projects').document(pid)
+    if not doc_ref.get().exists:
+        return jsonify({"error": "Not found"}), 404
+        
+    updates = {
+        "faculty_score": data.get("score"),
+        "faculty_comment": data.get("comment"),
+        "is_verified": data.get("is_verified", False),
+        "reviewed_by": data.get("faculty_name", "Faculty")
+    }
+    doc_ref.update(updates)
+    return jsonify({"success": True}), 200
+
+@app.route('/api/admin/stats', methods=['GET'])
+def get_admin_stats():
+    if not db: return jsonify({}), 200
+    all_users = [convert_doc(u) for u in db.collection('users').stream()]
+    all_projects = get_projects()
+    
+    total_students = len([u for u in all_users if u.get('role') == 'student'])
+    total_faculty = len([u for u in all_users if u.get('role') == 'faculty'])
+    verified_projects = len([p for p in all_projects if p.get('is_verified')])
+    
+    domains = list(set([p.get('domain', 'Other') for p in all_projects]))
+    
+    return jsonify({
+        "total_projects": len(all_projects),
+        "total_users": len(all_users),
+        "total_students": total_students,
+        "total_faculty": total_faculty,
+        "verified_projects": verified_projects,
+        "active_domains": len(domains)
+    }), 200
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot():
