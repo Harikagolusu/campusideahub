@@ -107,6 +107,7 @@ if genai:
 def convert_doc(doc_ref):
     data = doc_ref.to_dict()
     if data:
+        data = data.copy()
         data['_id'] = doc_ref.id
     return data
 
