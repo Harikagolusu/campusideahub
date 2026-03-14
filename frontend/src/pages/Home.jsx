@@ -9,17 +9,17 @@ export default function Home() {
   const [trending, setTrending] = useState([]);
 
   useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/projects?sort_by=trending`);
+        setTrending(res.data.slice(0, 5));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchTrending();
   }, []);
-
-  const fetchTrending = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/projects?sort_by=trending`);
-      setTrending(res.data.slice(0, 5));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   return (
     <div className="min-h-screen">

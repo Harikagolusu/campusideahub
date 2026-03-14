@@ -10,19 +10,19 @@ export default function IdeaGraph() {
   const networkRef = useRef(null);
 
   useEffect(() => {
+    const fetchGraph = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/graph`);
+        setGraphData(res.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
     fetchGraph();
   }, []);
-
-  const fetchGraph = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/graph`);
-      setGraphData(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    }
-  };
 
   const options = {
     layout: {

@@ -12,19 +12,19 @@ export default function Explore() {
   const domains = ['All', 'AI', 'Web', 'IoT', 'Cybersecurity', 'Cloud', 'App', 'Other'];
 
   useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/projects`, {
+          params: { search, domain }
+        });
+        setProjects(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchProjects();
   }, [search, domain]);
-
-  const fetchProjects = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/projects`, {
-        params: { search, domain }
-      });
-      setProjects(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   return (
     <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto min-h-screen">

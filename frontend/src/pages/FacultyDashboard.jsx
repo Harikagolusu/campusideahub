@@ -15,19 +15,19 @@ export default function FacultyDashboard() {
   const [reviewedCount, setReviewedCount] = useState(0);
 
   useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/projects/pending`);
+        setPending(res.data.pending || []);
+        setReviewedCount(res.data.reviewed_count || 0);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+
     fetchPending();
   }, []);
-
-  const fetchPending = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/projects/pending`);
-      setPending(res.data.pending || []);
-      setReviewedCount(res.data.reviewed_count || 0);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
 
   const submitReview = async (pid) => {
     try {

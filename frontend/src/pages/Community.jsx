@@ -14,17 +14,17 @@ export default function Community() {
   const currentUserName = currentUser?.name || currentUser?.email?.split('@')[0] || 'Anonymous';
 
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/community`);
+        setPosts(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchPosts();
   }, []);
-
-  const fetchPosts = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/community`);
-      setPosts(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handlePostSubmit = async (e) => {
     e.preventDefault();

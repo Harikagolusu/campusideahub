@@ -10,18 +10,18 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/admin/stats`);
+        setStats(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+
     fetchStats();
   }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/admin/stats`);
-      setStats(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
 
   return (
     <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto min-h-screen">

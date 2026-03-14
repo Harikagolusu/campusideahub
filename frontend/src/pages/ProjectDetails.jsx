@@ -15,19 +15,19 @@ export default function ProjectDetails() {
   const [activeAlumni, setActiveAlumni] = useState(null);
 
   useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const res = await axios.get(`http://${window.location.hostname}:5000/api/projects/${id}`);
+        setProject(res.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
     fetchProject();
   }, [id]);
-
-  const fetchProject = async () => {
-    try {
-      const res = await axios.get(`http://${window.location.hostname}:5000/api/projects/${id}`);
-      setProject(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    }
-  };
 
   const handleMentorshipRequest = async (alumniId) => {
     if (!currentUser) return alert("Please login to request mentorship");
